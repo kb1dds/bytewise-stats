@@ -21,4 +21,5 @@ kmeans_results %>%
   mutate(byte=as.numeric(byte))%>%
   ggplot(aes(x=byte_offset,y=byte,fill=hsv(cluster/10,1,if_else(count>10,1,count/10))))+
   geom_raster(show.legend = FALSE) +
+  scale_y_continuous(breaks=c(0,32,127,255)) +
   scale_fill_identity()
