@@ -1,4 +1,7 @@
-/* Collect bytewise statistics of streams */
+/* Collect bytewise statistics of streams
+ *
+ * Copyright (c) 2022, Michael Robinson
+ */
 
 #include <stdio.h>
 #include "bytewise_stats.h"
