@@ -4,16 +4,17 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "bytewise_stats.h"
 
-int main( int argc, char *argv ){
+int main( int argc, char *argv[] ){
   int i;
   unsigned int counts[256];
-  char line[1024], file[256], tag[256];
-  FILE *fp_in, *fp_out, *fp_data;
+  char line[1024], *file, *tag;
+  FILE *fp_in, *fp_data;
 
-  if( argc != 3 ){
-    printf("Usage: build_distributions list.csv output.csv\n");
+  if( argc != 2 ){
+    printf("Usage: build_distributions list.csv\n");
     exit(-1);
   }
   
@@ -22,34 +23,39 @@ int main( int argc, char *argv ){
     exit(-2);
   }
 
-  if( (fp_out=fopen(argv[2],"wt")) == NULL ){
-    printf("Error opening output file: %s\n",argv[2]);
-    exit(-2);
-  }
-
-  /* First column of output is the byte value */
-  fprintf(fp_out,"Byte");
+  /* Column Headers are the byte values */
+  printf("file_tag");
   for( i = 0; i < 256; i ++ ){
-    fprintf(fp_out,",%d",i);
+    printf(",%d",i);
   }
-  fprintf(fp_out,"\n");
+  printf("\n");
 
   /* Consume header and begin reading */
   if( fgets(line,1024,fp_in) != NULL ){
     
     while(fgets(line,1024,fp_in) != NULL){
-      sscanf(line,"%s,%s\n",tag,file);
-
+      /* Parse tag and filename from line */
+      tag = line;
+      for( i = 0; i < 1024; i ++ ){
+	if(line[i] == ','){
+	  line[i] = 0;
+	  file=&line[i+1];
+	}
+	if(line[i] == '\n'){
+	  line[i] = 0;
+	}
+      }
+      
       if( (fp_data=fopen(file,"rb")) != NULL ){
 	/* Collect distribution of bytes */
 	bytewise_distribution( fp_data, -1, 1, counts );
 
 	/* Store distribution in output file */
-	fprintf(fp_out,"%s",tag);
+	printf("%s",tag);
 	for( i = 0; i < 256; i ++ ){
-	  fprintf(fp_out,",%d",counts[i]);
+	  printf(",%d",counts[i]);
 	}
-	fprintf(fp_out,"\n");
+	printf("\n");
 	fclose(fp_data);
       }
       else{
@@ -59,5 +65,4 @@ int main( int argc, char *argv ){
   }
   
   fclose(fp_in);
-  fclose(fp_out);
 }
