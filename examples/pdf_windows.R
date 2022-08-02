@@ -23,3 +23,5 @@ kmeans_results %>%
   geom_raster(show.legend = FALSE) +
   scale_y_continuous(breaks=c(0,32,127,255)) +
   scale_fill_identity()
+
+ggsave('~/bytewise-stats/examples/pdf_windows.png')
