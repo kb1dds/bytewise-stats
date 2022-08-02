@@ -2,7 +2,7 @@
 
 library(tidyverse)
 
-data <- read_csv('~/bytewise-stats/pdf_windows.csv')
+data <- read_csv('~/bytewise-stats/examples//pdf_windows.csv')
 
 data_kmeans <- data %>% 
   select(-byte_offset) %>% 
