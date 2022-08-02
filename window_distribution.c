@@ -21,8 +21,6 @@ int main( int argc, char *argv[] ){
   sscanf(argv[1],"%d",&window_size);
   sscanf(argv[2],"%d",&window_stride);
   sscanf(argv[3],"%d",&window_offset);
-
-  printf("Size: %d\nStride: %d\nOffset: %d\n",window_size,window_stride,window_offset);
   
   if( (fp_data=fopen(argv[4],"rt")) == NULL ){
     printf("Error opening input file: %s\n",argv[4]);
