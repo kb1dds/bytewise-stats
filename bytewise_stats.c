@@ -58,11 +58,20 @@ void index_filename( char *index_file, char *index_path, unsigned char *window, 
     index_file[j] = index_path[j];
   }
   index_file[j] = '/';
-  for( i = 0, j ++; i < window_size; j += 2, i ++ ){
-    sprintf( &index_file[j], "%x", (unsigned) window[i]);
+  if( window_size > 0 ){
+    for( i = 0, j ++; i < window_size; j += 2, i ++ ){
+      sprintf( &index_file[j], "%x", (unsigned) window[i]);
+    }
+    j++;
+    index_file[j] = 0;
   }
-  j++;
-  index_file[j] = 0;
+  else{
+    index_file[j+1] = 'n';
+    index_file[j+2] = 'u';
+    index_file[j+3] = 'l';
+    index_file[j+4] = 'l';
+    index_file[j+5] = 0;
+  }
 }
 
 /* Accumuate byte counts into a directory with count files organized by prefix
@@ -71,15 +80,20 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
   FILE *ifp;
   long initial_position, bytes_read;
   char index_file[1024];
-  unsigned int count;
+  unsigned int count, counts[256], oldcounts[256];
   unsigned char byte, window[1024];
   int i, j, cws, k;
+
+  /* Present global histogram */
+  for( i = 0; i < 256; i ++ )
+    counts[i] = 0;
 
   /* Prefill window */
   for( i = 0; i < window_size; i ++ ){
     if(fread(&byte, 1, 1, fp)<1)
       return -1; /* Didn't manage to get a full window */
     window[i] = byte;
+    counts[byte] ++;
   }
 
   /* Main read loop */
@@ -105,7 +119,7 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
       /* Open index file */
       if( (ifp = fopen(index_file, "rb+")) == NULL){
 	if( (ifp = fopen(index_file, "wb")) == NULL )
-	  return -1;
+	  return -1; /* Fatal error */
 
 #ifdef DEBUG
 	printf("New index file\n");
@@ -141,6 +155,9 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
     if( fread(&byte, 1, 1, fp) != 1 )
       break; /* No more data! */
 
+    /* Global tally */
+    counts[byte] ++;
+
     /* Advance window */
     for( i = 1; i < window_size; i ++){
       window[i-1]=window[i];
@@ -149,6 +166,25 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
     /* Tack the next byte onto end of window */
     window[window_size-1] = byte;
   }
+
+  /* Save global histogram */
+  index_filename( index_file, index_path, window, 0 );
+  if( (ifp = fopen(index_file, "rb+")) == NULL){
+    if( (ifp = fopen(index_file, "wb")) == NULL )
+      return -1; /* Fatal error */
+
+    fwrite(counts,(sizeof count),256,ifp);
+  }
+  else{
+    fread(oldcounts,(sizeof count),256,ifp);
+    fseek( ifp, 0, SEEK_SET );
+    for( i = 0; i < 256; i ++ ){
+      counts[i] += oldcounts[i];
+    }
+    fwrite(counts,(sizeof count),256,ifp);
+  }
+  fclose(ifp);
+  
   return 1;
 }
   

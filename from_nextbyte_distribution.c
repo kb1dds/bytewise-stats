@@ -108,6 +108,27 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
 #endif    
   }
 
+  /* Look for a global histogram */
+  index_filename( index_file, index_path, window_ptr, 0 );
+
+  if( (ifp = fopen(index_file, "rb")) != NULL){
+    /* Index file found; pull counts and exit */
+#ifdef DEBUG
+    fprintf(stderr,"found!\nRead %lu\n",fread(counts, (sizeof counts[0]), 256, ifp));
+#else
+    fread(counts, (sizeof counts[0]), 256, ifp);
+#endif
+	
+    fclose(ifp);
+
+#ifdef DEBUG
+    for( i = 0; i < 256; i ++ )
+      fprintf(stderr,"%x:%c:%u ",i,i,counts[i]);
+    fprintf(stderr,"\n");
+#endif
+    return cws;
+  }
+  
   /* Default is uniform distribution */
   for( i = 0; i < 256; i ++ ){
     counts[i] = 1;
