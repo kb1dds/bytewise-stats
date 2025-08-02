@@ -46,9 +46,6 @@ int main( int argc, char *argv[] ){
       total_count += counts[i];
     }
     rv = (unsigned int)( (double)rand() * (double) total_count / (double) RAND_MAX);
-#ifdef DEBUG
-    printf(stderr,"Random: %u %u %d\n", rv, total_count, RAND_MAX);
-#endif
     for( total_count = 0, byte = 255, i = 0; i < 256; i ++ ){
       total_count += counts[i];
       if( rv < total_count ){
@@ -57,17 +54,21 @@ int main( int argc, char *argv[] ){
       }	
     }
 
+#ifdef DEBUG
+    fprintf(stderr,"Random: %u %u %d -> %x:%c\n", rv, total_count, RAND_MAX, byte, byte);
+#endif
+
     /* Send to stdout */
     printf("%c", byte);
 
     /* Advance window */
-    for( i = 1; i < cws+1; i ++){
+    for( i = window_size-cws; i < window_size; i ++){
       window[i-1]=window[i];
     }
 
     /* Tack the next byte onto end of window */
-    window[cws] = byte;
-    window[cws+1] = '\0';
+    window[window_size-1] = byte;
+    window[window_size] = '\0';
   }
 }
 
