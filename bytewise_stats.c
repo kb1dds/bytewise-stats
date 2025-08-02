@@ -1,6 +1,6 @@
 /* Collect bytewise statistics of streams
  *
- * Copyright (c) 2022, Michael Robinson
+ * Copyright (c) 2022,2025 Michael Robinson
  */
 
 #include <stdio.h>
@@ -49,3 +49,96 @@ int bytewise_distribution( FILE *fp, int window_size, int stride, unsigned int c
   fseek(fp, initial_position, SEEK_SET);
   return(bytes_read);
 }
+
+/* Accumuate byte counts into a directory with count files organized by prefix
+ */
+int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
+  FILE *ifp;
+  long initial_position, bytes_read;
+  char index_file[1024];
+  unsigned char count;
+  unsigned char byte, window[1024];
+  int i, j, cws, k;
+
+  /* Prefill window */
+  for( i = 0; i < window_size; i ++ ){
+    if(fread(&byte, 1, 1, fp)<1)
+      return -1; /* Didn't manage to get a full window */
+    window[i] = byte;
+  }
+
+  /* Main read loop */
+  while(1) {
+#if DEBUG
+    printf("Window is: ");
+    for( i = 0; i< window_size; i ++ ){
+      printf("%c",window[i]);
+    }
+    printf("\n");
+#endif
+    for( cws = 2; cws < window_size; cws ++ ){
+      /* Build index filename */
+#if DEBUG
+      printf("Current window size %d\n",cws);
+#endif
+      for( j = 0; index_path[j] != '\0' && j < 1024; j ++ ){
+	index_file[j] = index_path[j];
+      }
+      index_file[j] = '/';
+      for( i = 0, j ++; i < cws-1; j += 2, i ++ ){
+	sprintf( &index_file[j], "%x", (unsigned) window[i]);
+      }
+      j++;
+      index_file[j] = 0;
+
+#if DEBUG
+      printf("Index file is : %s; next character is %x\n", index_file, (unsigned) window[cws]);*/
+#endif
+
+      /* Open index file */
+      if( (ifp = fopen(index_file, "rb")) == NULL){
+	if( (ifp = fopen(index_file, "wb")) == NULL )
+	  return -1;
+
+	/* If index file does not exist, set all counts to zero except the next byte, which is 1 */
+	for( k = 0; k < 256; k ++ ){
+	  if( k == window[cws] )
+	    count = 1;
+	  else
+	    count = 0;
+	  
+	  fwrite( &count, (sizeof count), 1, ifp );
+	}
+      }
+      else{
+	fclose(ifp);
+	if( (ifp = fopen(index_file, "wb")) == NULL )
+	  return -1;
+	
+	/* Increment count in index file */
+	fseek( ifp, (sizeof count)*window[cws], SEEK_SET );
+	fread( &count, (sizeof count), 1, ifp );
+	fseek( ifp, -(sizeof count), SEEK_CUR );
+	count ++;
+	fwrite( &count, (sizeof count), 1, ifp );
+      }
+
+      /* Close index file */
+      fclose(ifp);
+    }
+
+    /* Consume next byte */
+    if( fread(&byte, 1, 1, fp) != 1 )
+      break; /* No more data! */
+
+    /* Advance window */
+    for( i = 1; i < window_size+1; i ++){
+      window[i-1]=window[i];
+    }
+
+    /* Tack the next byte onto end of window */
+    window[window_size] = byte;
+  }
+  return 1;
+}
+  
