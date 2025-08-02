@@ -11,10 +11,10 @@
 
 #define MAX_WINDOW_SIZE 1024
 
-unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts );
+unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts, int *fallback );
 
 int main( int argc, char *argv[] ){
-  int i, j, k;
+  int i, j, k, fallback;
   unsigned int count, counts[256], total_count, rv, window_size, cws;
   unsigned char window[MAX_WINDOW_SIZE], byte;
 
@@ -34,13 +34,15 @@ int main( int argc, char *argv[] ){
 
   window[window_size] = '\0';
 
+  printf("%s", window);
+
   for( j = 0; j < count; j ++ ){
     /* Get distribution for this window */
 #ifdef DEBUG
     fprintf(stderr,"Window: %s\n", window);
 #endif
-    cws = get_byte_distribution( argv[1], window, window_size, counts );
-
+    cws = get_byte_distribution( argv[1], window, window_size, counts, &fallback );
+    
     /* Draw random character from this distribution */
     for( total_count = 0, i = 0; i < 256; i ++ ){
       total_count += counts[i];
@@ -59,7 +61,11 @@ int main( int argc, char *argv[] ){
 #endif
 
     /* Send to stdout */
+    if(fallback)
+      printf("\e[1;31m");
     printf("%c", byte);
+    if(fallback)
+      printf("\e[0m");
 
     /* Advance window */
     for( i = 1; i < window_size; i ++){
@@ -72,7 +78,7 @@ int main( int argc, char *argv[] ){
   }
 }
 
-unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts ){
+unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts, int *fallback ){
   char index_file[MAX_WINDOW_SIZE*3];
   unsigned char *window_ptr;
   FILE *ifp;
@@ -101,6 +107,7 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
 	fprintf(stderr,"%x:%c:%u ",i,i,counts[i]);
       fprintf(stderr,"\n");
 #endif
+      *fallback = 0;
       return cws;
     }
 #ifdef DEBUG
@@ -109,6 +116,7 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
   }
 
   /* Look for a global histogram */
+  *fallback = 1;
   index_filename( index_file, index_path, window_ptr, 0 );
 
 #ifdef DEBUG
