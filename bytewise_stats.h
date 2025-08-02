@@ -7,5 +7,6 @@
 #define _BYTEWISE_STATS_H_
 int bytewise_distribution( FILE *fp, int window_size, int stride, unsigned int counts[] );
 int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size );
+void index_filename( char *index_file, char *index_path, unsigned char *window, int window_size );
 
 #endif /*_BYTEWISE_STATS_H_*/

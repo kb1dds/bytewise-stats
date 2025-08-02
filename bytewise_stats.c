@@ -50,6 +50,21 @@ int bytewise_distribution( FILE *fp, int window_size, int stride, unsigned int c
   return(bytes_read);
 }
 
+/* Construct index filename from window */
+void index_filename( char *index_file, char *index_path, unsigned char *window, int window_size ){
+  int i, j;
+  
+  for( j = 0; index_path[j] != '\0' && j < 1024; j ++ ){
+    index_file[j] = index_path[j];
+  }
+  index_file[j] = '/';
+  for( i = 0, j ++; i < window_size-1; j += 2, i ++ ){
+    sprintf( &index_file[j], "%x", (unsigned) window[i]);
+  }
+  j++;
+  index_file[j] = 0;
+}
+
 /* Accumuate byte counts into a directory with count files organized by prefix
  */
 int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
@@ -81,15 +96,7 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
 #if DEBUG
       printf("Current window size %d\n",cws);
 #endif
-      for( j = 0; index_path[j] != '\0' && j < 1024; j ++ ){
-	index_file[j] = index_path[j];
-      }
-      index_file[j] = '/';
-      for( i = 0, j ++; i < cws-1; j += 2, i ++ ){
-	sprintf( &index_file[j], "%x", (unsigned) window[i]);
-      }
-      j++;
-      index_file[j] = 0;
+      index_filename( index_file, index_path, window, cws );
 
 #if DEBUG
       printf("Index file is : %s; next character is %x\n", index_file, (unsigned) window[cws]);*/
