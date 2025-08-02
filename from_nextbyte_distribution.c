@@ -7,13 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 #include "bytewise_stats.h"
 
 #define MAX_WINDOW_SIZE 1024
 
 #define ANSI_COLORS
 
-unsigned char random_draw( unsigned int *counts, unsigned int *tc );
+unsigned char random_draw( unsigned int *counts, unsigned int *tc, double *entropy );
 
 unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts, int *fallback );
 
@@ -21,6 +22,7 @@ int main( int argc, char *argv[] ){
   int i, j, k, fallback;
   unsigned int count, counts[256], total_count, current_count, rv, window_size, cws;
   unsigned char window[MAX_WINDOW_SIZE], byte;
+  double entropy, default_entropy;
 
   /* Seed for random */
   srand(time(NULL));
@@ -32,6 +34,10 @@ int main( int argc, char *argv[] ){
 
   sscanf(argv[2],"%d",&window_size);
   sscanf(argv[3],"%d",&count);
+
+  /* Entropy calibration */
+  get_byte_distribution( argv[1], NULL, window_size, counts, NULL );
+  random_draw(counts, NULL, &default_entropy);
 
   /* Grab prefix from stdin */
   scanf("%s",window);
@@ -50,7 +56,7 @@ int main( int argc, char *argv[] ){
     }
     get_byte_distribution( argv[1], NULL, window_size, counts, NULL );
     for( i = current_count-1; i >= 0; i --) {
-      window[i] = random_draw(counts, NULL);
+      window[i] = random_draw(counts, NULL, NULL);
     }
   }
   window[window_size] = '\0';
@@ -65,7 +71,7 @@ int main( int argc, char *argv[] ){
     cws = get_byte_distribution( argv[1], window, window_size, counts, &fallback );
     
     /* Draw random character from this distribution */
-    byte = random_draw( counts, &total_count );
+    byte = random_draw( counts, &total_count, &entropy );
 
 #ifdef DEBUG
     fprintf(stderr,"Random: %u %u %d -> %x:%c\n", rv, total_count, RAND_MAX, byte, byte);
@@ -73,7 +79,7 @@ int main( int argc, char *argv[] ){
 
     /* Send to stdout */
 #ifdef ANSI_COLORS
-    i = (int)(255*((double)counts[byte]/(double)total_count));
+    i = (int)(255*(default_entropy - entropy)/default_entropy);
     i = (i<100)?100:i;
     if(fallback){
       printf("\e[38;2;%d;0;0m",255-i);
@@ -100,13 +106,23 @@ int main( int argc, char *argv[] ){
 }
 
 /* Draw random character from this distribution */
-unsigned char random_draw( unsigned int *counts, unsigned int *tc ){
+unsigned char random_draw( unsigned int *counts, unsigned int *tc, double *entropy ){
   unsigned int total_count, current_count, i, rv;
   unsigned char byte;
-  
+  double H;
+
   for( total_count = 0, i = 0; i < 256; i ++ ){
     total_count += counts[i];
   }
+  if( entropy != NULL ){
+    for( H = 0., i = 0; i < 256; i ++ ){
+      if(counts[i] > 0)
+	H -= counts[i] * log10((double)counts[i]/(double)total_count)/log10(2.0);
+    }
+    H /= total_count;
+    *entropy = H;
+  }
+  
   rv = (unsigned int)( (double)rand() * (double) total_count / (double) RAND_MAX);
   for( current_count = 0, byte = 255, i = 0; i < 256; i ++ ){
     current_count += counts[i];
