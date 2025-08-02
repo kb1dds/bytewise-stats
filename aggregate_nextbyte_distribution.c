@@ -8,10 +8,7 @@
 #include "bytewise_stats.h"
 
 int main( int argc, char *argv[] ){
-  int i, window_size;
-  unsigned int counts[256];
-  char line[1024], *file, *tag;
-  FILE *fp_in, *fp_data;
+  int window_size;
 
   if( argc != 3 ){
     printf("Usage: aggregate_nextbyte_distribution index_directory window_size\n");
