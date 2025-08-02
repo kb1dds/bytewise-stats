@@ -58,7 +58,7 @@ void index_filename( char *index_file, char *index_path, unsigned char *window, 
     index_file[j] = index_path[j];
   }
   index_file[j] = '/';
-  for( i = 0, j ++; i < window_size-1; j += 2, i ++ ){
+  for( i = 0, j ++; i < window_size; j += 2, i ++ ){
     sprintf( &index_file[j], "%x", (unsigned) window[i]);
   }
   j++;

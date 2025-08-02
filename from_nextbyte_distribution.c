@@ -6,18 +6,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "bytewise_stats.h"
 
 #define MAX_WINDOW_SIZE 1024
 
-void get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts );
+unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts );
 
 int main( int argc, char *argv[] ){
-  int i, j, k, count, counts[256], total_count, rv, window_size;
+  int i, j, k;
+  unsigned int count, counts[256], total_count, rv, window_size, cws;
   unsigned char window[MAX_WINDOW_SIZE], byte;
+
+  /* Seed for random */
+  srand(time(NULL));
   
   if( argc != 4 ){
-    printf("Usage: from_nextbyte_distribution index_directory window_size count\n");
+    fprintf(stderr,"Usage: from_nextbyte_distribution index_directory window_size count\n");
     exit(-1);
   }
 
@@ -31,13 +36,19 @@ int main( int argc, char *argv[] ){
 
   for( j = 0; j < count; j ++ ){
     /* Get distribution for this window */
-    printf("Window: %s\n", window);
-    get_byte_distribution( argv[1], window, window_size, counts );
+#ifdef DEBUG
+    fprintf(stderr,"Window: %s\n", window);
+#endif
+    cws = get_byte_distribution( argv[1], window, window_size, counts );
 
     /* Draw random character from this distribution */
-    for( total_count = 0, i = 0; i < 256; i ++ )
+    for( total_count = 0, i = 0; i < 256; i ++ ){
       total_count += counts[i];
-    rv = rand() * total_count/RAND_MAX;
+    }
+    rv = (unsigned int)( (double)rand() * (double) total_count / (double) RAND_MAX);
+#ifdef DEBUG
+    printf(stderr,"Random: %u %u %d\n", rv, total_count, RAND_MAX);
+#endif
     for( total_count = 0, byte = 255, i = 0; i < 256; i ++ ){
       total_count += counts[i];
       if( rv < total_count ){
@@ -50,16 +61,17 @@ int main( int argc, char *argv[] ){
     printf("%c", byte);
 
     /* Advance window */
-    for( i = 1; i < window_size+1; i ++){
+    for( i = 1; i < cws+1; i ++){
       window[i-1]=window[i];
     }
 
     /* Tack the next byte onto end of window */
-    window[window_size-1] = byte;
+    window[cws] = byte;
+    window[cws+1] = '\0';
   }
 }
 
-void get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts ){
+unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts ){
   char index_file[MAX_WINDOW_SIZE*3];
   unsigned char *window_ptr;
   FILE *ifp;
@@ -69,21 +81,35 @@ void get_byte_distribution( char *index_path, unsigned char *window, int window_
     /* Construct index filename */
     index_filename( index_file, index_path, window_ptr, cws );
 
-    printf("Trying index file : %s ... ",index_file);
-
+#ifdef DEBUG
+    fprintf(stderr,"Trying index file (cws=%d) : %s ... ",cws,index_file);
+#endif
+    
     if( (ifp = fopen(index_file, "rb")) != NULL){
-      printf("found!\n");
       /* Index file found; pull counts and exit */
-      fread(counts, (sizeof counts), 256, ifp);
+#ifdef DEBUG
+      fprintf(stderr,"found!\nRead %lu\n",fread(counts, (sizeof counts[0]), 256, ifp));
+#else
+      fread(counts, (sizeof counts[0]), 256, ifp);
+#endif
+	
       fclose(ifp);
-      return;
+
+#ifdef DEBUG
+      for( i = 0; i < 256; i ++ )
+	fprintf(stderr,"%x:%c:%u ",i,i,counts[i]);
+      fprintf(stderr,"\n");
+#endif
+      return cws;
     }
-    printf("not found\n");
+#ifdef DEBUG
+    fprintf(stderr,"not found\n");
+#endif    
   }
 
   /* Default is uniform distribution */
   for( i = 0; i < 256; i ++ ){
     counts[i] = 1;
   }
-
+  return 1;
 }
