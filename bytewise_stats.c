@@ -71,7 +71,7 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
   FILE *ifp;
   long initial_position, bytes_read;
   char index_file[1024];
-  unsigned char count;
+  unsigned int count;
   unsigned char byte, window[1024];
   int i, j, cws, k;
 
