@@ -1,4 +1,4 @@
-/* Collect bytewise statistics of a file
+/* Collect bytewise statistics of stdin
  *
  * Copyright (c) 2025, Michael Robinson
  */
@@ -13,20 +13,12 @@ int main( int argc, char *argv[] ){
   char line[1024], *file, *tag;
   FILE *fp_in, *fp_data;
 
-  if( argc != 4 ){
-    printf("Usage: aggregate_nextbyte_distribution file index_directory window_size\n");
+  if( argc != 3 ){
+    printf("Usage: aggregate_nextbyte_distribution index_directory window_size\n");
     exit(-1);
   }
 
-  sscanf(argv[3],"%d",&window_size);
+  sscanf(argv[2],"%d",&window_size);
         
-  if( (fp_data=fopen(argv[1],"rb")) != NULL ){
-    /* Collect distribution of bytes */
-    byte_prefixed_distribution( fp_data, argv[2], window_size );
-    
-    fclose(fp_data);
-  }
-  else{
-    printf("Error opening data file: %s\n",file);
-  }
+  byte_prefixed_distribution( stdin, argv[1], window_size );
 }
