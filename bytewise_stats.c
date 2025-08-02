@@ -84,7 +84,7 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
 
   /* Main read loop */
   while(1) {
-#if DEBUG
+#ifdef DEBUG
     printf("Window is: ");
     for( i = 0; i< window_size; i ++ ){
       printf("%c",window[i]);
@@ -93,24 +93,31 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
 #endif
     for( cws = 2; cws < window_size; cws ++ ){
       /* Build index filename */
-#if DEBUG
+#ifdef DEBUG
       printf("Current window size %d\n",cws);
 #endif
       index_filename( index_file, index_path, window, cws );
 
-#if DEBUG
-      printf("Index file is : %s; next character is %x\n", index_file, (unsigned) window[cws]);*/
+#ifdef DEBUG
+      printf("Index file is : %s; next character is %x\n", index_file, (unsigned) window[cws]);
 #endif
 
       /* Open index file */
-      if( (ifp = fopen(index_file, "rb")) == NULL){
+      if( (ifp = fopen(index_file, "rb+")) == NULL){
 	if( (ifp = fopen(index_file, "wb")) == NULL )
 	  return -1;
 
+#ifdef DEBUG
+	printf("New index file\n");
+#endif
 	/* If index file does not exist, set all counts to zero except the next byte, which is 1 */
 	for( k = 0; k < 256; k ++ ){
-	  if( k == window[cws] )
+	  if( k == window[cws] ){
 	    count = 1;
+#ifdef DEBUG
+	    printf("Character %x now has count 1\n", k);
+#endif
+	  }
 	  else
 	    count = 0;
 	  
@@ -118,14 +125,10 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
 	}
       }
       else{
-	fclose(ifp);
-	if( (ifp = fopen(index_file, "wb")) == NULL )
-	  return -1;
-	
 	/* Increment count in index file */
 	fseek( ifp, (sizeof count)*window[cws], SEEK_SET );
 	fread( &count, (sizeof count), 1, ifp );
-	fseek( ifp, -(sizeof count), SEEK_CUR );
+	fseek( ifp, (sizeof count)*window[cws], SEEK_SET );
 	count ++;
 	fwrite( &count, (sizeof count), 1, ifp );
       }
