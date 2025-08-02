@@ -1,8 +1,10 @@
 # bytewise-stats: Looking a statistics of byte usage in files
 
-## Two utilities are provided:
+## Four utilities are provided:
 * `window_distribution` : runs a sliding window over a file, producing a CSV file of counts of each byte seen in each window
 * `build_distribution` : Collects counts of each byte seen in a collection of files listed in a single CSV file
+* `aggregate_nextbyte_distribution` : Collects counts of each byte that follow prefixes seen in `stdin`.  The results are deposited in a specified directory
+* `from_next_distribution` : Generates stream of bytes to `stdout` given a prefix on `stdin` based on the output of `aggregate_nextbyte_distribution`
 
 ## PDF example
 
