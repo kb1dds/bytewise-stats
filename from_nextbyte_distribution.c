@@ -62,7 +62,7 @@ int main( int argc, char *argv[] ){
     printf("%c", byte);
 
     /* Advance window */
-    for( i = window_size-cws; i < window_size; i ++){
+    for( i = 1; i < window_size; i ++){
       window[i-1]=window[i];
     }
 
@@ -110,6 +110,10 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
 
   /* Look for a global histogram */
   index_filename( index_file, index_path, window_ptr, 0 );
+
+#ifdef DEBUG
+  fprintf(stderr,"Falling back to global distribution: %s...",index_file);
+#endif  
 
   if( (ifp = fopen(index_file, "rb")) != NULL){
     /* Index file found; pull counts and exit */
