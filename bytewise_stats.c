@@ -139,12 +139,12 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
       break; /* No more data! */
 
     /* Advance window */
-    for( i = 1; i < window_size+1; i ++){
+    for( i = 1; i < window_size; i ++){
       window[i-1]=window[i];
     }
 
     /* Tack the next byte onto end of window */
-    window[window_size] = byte;
+    window[window_size-1] = byte;
   }
   return 1;
 }
