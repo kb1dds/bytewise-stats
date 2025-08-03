@@ -32,7 +32,7 @@ Only the standard C libraries are needed to build on Linux:
 
 ```
 cc bytewise_stats.c aggregate_nextbyte_distribution.c -o aggregate_nextbyte_distribution
-cc bytewise_stats.c from_nextbyte_distribution.c -lm -o from_nextbyte_distribution
+cc bytewise_stats.c from_nextbyte_distribution.c -lm -DANSI_COLOR -o from_nextbyte_distribution
 ```
 
 ### Training and running
@@ -57,7 +57,7 @@ The output bytes are colored:
 * Red: Bytes drawn from the distribution of all bytes (no prefix), which happens when a prefix is not found in the training data.
 
 > [!TIP]
-> If you wish to disable colors, there is a compile-time flag ANSI_COLOR that can be removed.
+> If you wish to disable colors, there is a compile-time flag ANSI_COLOR in the above build command that can be removed.
 
 It is not required that the context window sizes match.  If there's a mismatch, the content will be cropped accordingly.  In particular, as the model runs, it starts with the stated context window size.  If the current prefix is not found with that size, the prefix is repeatedly cropped (removing bytes from the beginning) until either a match is found or the window is exhausted.  If the window is exhausted, the distribution of all bytes is used as a fallback (output bytes colored red).
 

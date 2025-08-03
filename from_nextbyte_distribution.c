@@ -12,8 +12,6 @@
 
 #define MAX_WINDOW_SIZE 1024
 
-#define ANSI_COLORS
-
 unsigned char random_draw( unsigned int *counts, unsigned int *tc, double *entropy );
 
 unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts, int *fallback );
@@ -78,7 +76,7 @@ int main( int argc, char *argv[] ){
 #endif
 
     /* Send to stdout */
-#ifdef ANSI_COLORS
+#ifdef ANSI_COLOR
     i = (int)(255*(default_entropy - entropy)/default_entropy);
     i = (i<100)?100:i;
     if(fallback){
@@ -89,7 +87,7 @@ int main( int argc, char *argv[] ){
     }
 #endif
     printf("%c", byte);
-#ifdef ANSI_COLORS
+#ifdef ANSI_COLOR
     if(fallback)
       printf("\e[0m");
 #endif
