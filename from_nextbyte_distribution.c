@@ -71,10 +71,6 @@ int main( int argc, char *argv[] ){
     /* Draw random character from this distribution */
     byte = random_draw( counts, &total_count, &entropy );
 
-#ifdef DEBUG
-    fprintf(stderr,"Random: %u %u %d -> %x:%c\n", rv, total_count, RAND_MAX, byte, byte);
-#endif
-
     /* Send to stdout */
 #ifdef ANSI_COLOR
     i = (int)(255*(default_entropy - entropy)/default_entropy);
@@ -121,16 +117,20 @@ unsigned char random_draw( unsigned int *counts, unsigned int *tc, double *entro
     *entropy = H;
   }
   
-  rv = (unsigned int)( (double)rand() * (double) total_count / (double) RAND_MAX);
+  rv = 1+(unsigned int)( (double)rand() * (double) total_count / (double) RAND_MAX);
   for( current_count = 0, byte = 255, i = 0; i < 256; i ++ ){
     current_count += counts[i];
-    if( rv < current_count ){
+    if( rv <= current_count ){
       byte = i;
       break;
     }	
   }
   if( tc != NULL )
     *tc = total_count;
+
+#ifdef DEBUG
+  fprintf(stderr,"Random: %u %u %d -> %x:%c\n", rv, total_count, RAND_MAX, byte, byte);
+#endif
   
   return byte;
 }
@@ -143,7 +143,7 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
   int cws, i;
 
   if( window != NULL ){
-    for( window_ptr = window, cws = window_size; cws > 2 ; window_ptr ++, cws -- ){
+    for( window_ptr = window, cws = window_size; cws >= 1 ; window_ptr ++, cws -- ){
       /* Construct index filename */
       index_filename( index_file, index_path, window_ptr, cws );
 
@@ -176,7 +176,7 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
     }
   }
 
-  /* Look for a global histogram */
+      /* Look for a global histogram */
   if( fallback != NULL )
     *fallback = 1;
   index_filename( index_file, index_path, window_ptr, 0 );
