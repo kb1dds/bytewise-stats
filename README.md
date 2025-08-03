@@ -10,7 +10,7 @@
 
 As a simple example, the script `pdf_windows.R` and `pdf_windows.csv` shows the byte distribution for a random PDF file [https://github.com/gangtan/LangSec-papers-and-slides/raw/main/langsec22/papers/Robinson_LangSec22.pdf] using
 ```
-$ ./window_distribution 1024 1 256 Robinson_LangSec22.pdf > pdf_windows.csv
+./window_distribution 1024 1 256 Robinson_LangSec22.pdf > pdf_windows.csv
 ```
 
 ## Booting examples
@@ -31,8 +31,8 @@ These tools collect the empircal distribution of tokens that follow a given pref
 Only the standard C libraries are needed to build on Linux:
 
 ```
-$ cc bytewise_stats.c aggregate_nextbyte_distribution.c -o aggregate_nextbyte_distribution
-$ cc bytewise_stats.c from_nextbyte_distribution.c -lm -o from_nextbyte_distribution
+cc bytewise_stats.c aggregate_nextbyte_distribution.c -o aggregate_nextbyte_distribution
+cc bytewise_stats.c from_nextbyte_distribution.c -lm -o from_nextbyte_distribution
 ```
 
 ### Training and running
@@ -41,8 +41,8 @@ Training data is simply streamed from `stdin`.  You will need a directory where 
 
 For instance, to use a context window size of 4 bytes (two given 3 bytes, predict 1 byte): 
 ```
-$ mkdir ~/model
-$ cat somefile.txt | ./aggregate_nextbyte_distribution ~/model 4
+mkdir ~/model
+cat somefile.txt | ./aggregate_nextbyte_distribution ~/model 4
 ```
 
 > [!WARNING]
@@ -50,7 +50,7 @@ $ cat somefile.txt | ./aggregate_nextbyte_distribution ~/model 4
 
 If you want to generate 1024 byes based on this model, say starting with "foo", you would do
 ```
-$ echo "foo" | ./from_nextbyte_distribution ~/model 4 1024
+echo "foo" | ./from_nextbyte_distribution ~/model 4 1024
 ```
 The output bytes are colored:
 * Gray/white: Bytes drawn from the conditional distributions.  Brightness correlates with smaller entropy of the distribution.  White means low entropy, while dark means high entropy.
@@ -67,10 +67,10 @@ Given that models can get big, it might be desirable to compress them.  This res
 
 Continuing the example above,
 ```
-$ mksquashfs ~/model ~/model.sqfs
-$ mkdir ~/model_smaller
-$ mount ~/model.sqfs ~/model_smaller -t squashfs -o loop
-$ echo "foo" | ./from_nextbyte_distribution ~/model_smaller 4 1024
+mksquashfs ~/model ~/model.sqfs
+mkdir ~/model_smaller
+mount ~/model.sqfs ~/model_smaller -t squashfs -o loop
+echo "foo" | ./from_nextbyte_distribution ~/model_smaller 4 1024
 ```
 
 > [!TIP]
