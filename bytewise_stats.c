@@ -60,7 +60,7 @@ void index_filename( char *index_file, char *index_path, unsigned char *window, 
   index_file[j] = '/';
   if( window_size > 0 ){
     for( i = 0, j ++; i < window_size; j += 2, i ++ ){
-      sprintf( &index_file[j], "%x", (unsigned) window[i]);
+      sprintf( &index_file[j], "%02x", (unsigned) window[i]);
     }
     j++;
     index_file[j] = 0;
