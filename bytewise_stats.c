@@ -4,6 +4,7 @@
  */
 
 #include <stdio.h>
+#include <math.h>
 #include "bytewise_stats.h"
 
 /* Collect counts of bytes from a file 
@@ -187,4 +188,52 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
   
   return 1;
 }
+
+/* Run Chi^2 goodness of fit test to compare two byte histograms
+ * Input: expected_counts = histogram of counts for reference distribution (array of 256)
+ *        observed_counts = histogram of counts for test distribution (array of 256)
+ * Output: chisq_out = test statistic (or NULL if unwanted)
+ * Returns: p-value for test Chi^2 goodness of fit distribution
+ */
+double bytewise_distribution_compare( unsigned int reference_counts[], unsigned int observed_counts[], double *chisq_out ){
+  int i;
+  double total_reference, total_observed;
+  double chisq, expected;
+
+  /* Compute total counts for both histograms */
+  for( i = 0, total_reference = 0, total_observed; i < 256; i ++ ){
+    total_reference += (double) reference_counts[i];
+    total_observed += (double) observed_counts[i];
+  }
   
+  for( i = 0, chisq = 0.0; i < 256; i ++ ){
+    expected = total_observed * (double)reference_counts[i] / total_reference;
+    chisq += (observed_counts[i]-expected)*(observed_counts[i]-expected)/expected;
+  }
+
+  if( chisq_out )
+    *chisq_out = chisq;
+
+  return chisquared_pval( chisq, 255 );
+}
+
+/* Estimate p-value for Chi^2 distribution
+ * Uses the approximation from
+ * "Exploring How to Simply Approximate the P-value of a Chi-Squared Statistic, Eric J. Beh, Austrian Journal of Statistics June 2018, Volume 47, 63-75."
+ * Input: chisq = test statistic
+ *        dof   = degrees of freedom
+ * Returns: p-value
+ */
+double chisquared_pval(double chisq, double dof){
+  double cutoff, exponent;
+
+  cutoff = (-1.37266 + 1.06807 * sqrt(dof));
+  
+  if( chisq >= (cutoff*cutoff) ){
+    exponent = (sqrt(chisq)-cutoff)/(2.13161-0.04589*sqrt(dof));
+    exponent *= exponent;
+    return( pow(0.1, exponent) );
+  }
+  else
+    return 1.0;
+}
