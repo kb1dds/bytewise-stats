@@ -17,15 +17,15 @@ int main( int argc, char *argv[] ){
     exit(-1);
   }
 
-  if( ( fp = fopen(argv[2], "rb") ) == NULL ){
-    fprintf(stderr,"Error opening: %s\n",argv[2]);
+  if( ( fp = fopen(argv[1], "rb") ) == NULL ){
+    fprintf(stderr,"Error opening: %s\n",argv[1]);
     exit(-1);
   }
   fread(reference_counts,(sizeof reference_counts),256,fp);
   fclose(fp);
 
-  if( ( fp = fopen(argv[3], "rb") ) == NULL ){
-    fprintf(stderr,"Error opening: %s\n",argv[3]);
+  if( ( fp = fopen(argv[2], "rb") ) == NULL ){
+    fprintf(stderr,"Error opening: %s\n",argv[2]);
     exit(-1);
   }
   fread(test_counts,(sizeof test_counts),256,fp);
