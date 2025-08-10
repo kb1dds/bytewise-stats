@@ -7,6 +7,8 @@
 #include <math.h>
 #include "bytewise_stats.h"
 
+static double igf(double S, double Z);
+
 /* Collect counts of bytes from a file 
  * Input: fp = file pointer to read from
  *        window_size = number of bytes to read.  Negative means consume entire file
@@ -322,21 +324,64 @@ double byte_distribution_compare( unsigned int reference_counts[], unsigned int 
 }
 
 /* Estimate p-value for Chi^2 distribution
- * Uses the approximation from
- * "Exploring How to Simply Approximate the P-value of a Chi-Squared Statistic, Eric J. Beh, Austrian Journal of Statistics June 2018, Volume 47, 63-75."
+ * Based upon the code at
+ *  [https://www.codeproject.com/Articles/432194/How-to-Calculate-the-Chi-Squared-P-Value]
+ * See also [https://en.wikipedia.org/wiki/Chi-squared_distribution#Cumulative_distribution_function]
  * Input: chisq = test statistic
  *        dof   = degrees of freedom
  * Returns: p-value
  */
 double chisquared_pval(double chisq, double dof){
-  double cutoff, exponent;
-  cutoff = (-1.37266 + 1.06807 * sqrt(dof));
+  double K, X, pvalue;
+
+  /* Bounds check */
+  if(chisq < 0 || dof < 1)
+    return 0.0;
+    
+  /* Special case if dof = 2 */
+  X = chisq * 0.5;
+  if(dof == 2)
+    return exp(-1.0 * X);
+
+  /* Otherwise use the incomplete gamma function for the numerator */
+  K = ((double)dof) * 0.5;
+  pvalue = igf(K, X);
+
+  /* Error handling */
+  if(isnan(pvalue) || isinf(pvalue) || pvalue <= 1e-8)
+    return 1e-14;
+
+  /* Gamma function in the denominator */
+  pvalue /= tgamma(K);
   
-  if( chisq >= (cutoff*cutoff) ){
-    exponent = (sqrt(chisq)-cutoff)/(2.13161-0.04589*sqrt(dof));
-    exponent *= exponent;
-    return( pow(0.1, exponent) );
+  return (1.0 - pvalue);
+}
+
+/* Incomplete gamma function
+ * Based upon the code at
+ *  [https://www.codeproject.com/Articles/432194/How-to-Calculate-the-Chi-Squared-P-Value]
+ * which evaluates the power series given in [https://en.wikipedia.org/wiki/Incomplete_gamma_function#Evaluation_formulae]
+ */
+static double igf(double S, double Z)
+{
+  double Sc, sum, num, denom;
+   
+  if(Z < 0.0)
+    return 0.0;
+
+  /* Leading coefficient */
+  Sc = (1.0 / S);
+  Sc *= pow(Z, S);
+  Sc *= exp(-Z);
+
+  /* Power series terms; run until they get small */
+  for( sum = 1.0, num = 1.0, denom = 1.0; (num / denom) > 1e-6; ){
+    num *= Z;
+    S++;
+    denom *= S;
+    sum += (num / denom);
   }
-  else
-    return 1.0;
+
+  /* Final assembly */
+  return sum * Sc;
 }
