@@ -1,11 +1,12 @@
 # bytewise-stats: Looking a statistics of byte usage in files
 
-## Five utilities are provided:
+## Six utilities are provided:
 * `window_distribution` : runs a sliding window over a file, producing a CSV file of counts of each byte seen in each window
 * `build_distribution` : Collects counts of each byte seen in a collection of files listed in a single CSV file
 * `aggregate_nextbyte_distribution` : Collects counts of each byte that follow prefixes seen in `stdin`.  The results are deposited in a specified directory
 * `from_nextbyte_distribution` : Generates stream of bytes to `stdout` given a prefix on `stdin` based on the output of `aggregate_nextbyte_distribution`
-* `compare_byte_distributions` : Runs Chi^2 goodness of fit distribution for two byte histogram files, produced by `aggregate_nextbyte_distribution`
+* `compare_nextbyte_distributions` : Runs Chi^2 goodness of fit test for two next byte reports produced by `aggregate_nextbyte_distribution`
+* `compare_byte_distributions` : Runs Chi^2 goodness of fit test for two byte histogram files, each of which was one of the files made by `aggregate_nextbyte_distribution`
 
 ## PDF example
 
@@ -62,6 +63,42 @@ The output bytes are colored:
 > If you wish to disable colors, there is a compile-time flag ANSI_COLOR in the above build command that can be removed.
 
 It is not required that the context window sizes match.  If there's a mismatch, the content will be cropped accordingly.  In particular, as the model runs, it starts with the stated context window size.  If the current prefix is not found with that size, the prefix is repeatedly cropped (removing bytes from the beginning) until either a match is found or the window is exhausted.  If the window is exhausted, the distribution of all bytes is used as a fallback (output bytes colored red).  Fallbacks should be very rare except when starting off, since no approximations are being used.
+
+### Comparing models
+
+Once you have run `aggregate_nextbyte_distribution` on two different datasets, you can compare the distributions that it produces.  This can be done for an individual pair of histogram files or in bulk.
+
+The Chi^2 test asks whether a byte stream may have been produced according to a given distribution.  The byte stream needs to be transformed into a byte histogram (via `aggregate_nextbyte_distribution`).  This is called the *test* histogram.
+The test histogram is to be compared to an existing histogram (which may also have been made by `aggregate_nextbyte_histogram`), called the *reference* histogram.
+
+#### Running for a single distribution
+
+So, if you want to ask whether a single histogram from the test data could have come from the reference data's distribution, you run the following:
+
+```
+compare_byte_histograms ~/model_reference/null ~/model_test/null
+```
+
+This produces two numbers, separated by a comma: the Chi^2 value for the test, and the associated p-value for the test.  Smaller p-values mean that the distributions are more different.
+
+> [!TIP]
+> The Chi^2 test is not commutative; running the arguments in the opposite order will give different results.
+
+#### Running against all distributions
+
+If you want to check all next byte conditional distributions to see if a given byte stream came from a given model (via `from_nextbyte_distribution`), there is a convenience script to aggregate the results.
+
+```
+mkdir ~/test_index
+cat file_of_interest | ./aggregate_nextbyte_distribution ~/test_index 4
+echo "prefix,chisq,pvalue" > results.csv
+sh compare_nextbyte_distributions ~/model_reference ~/test_index >> results.csv
+```
+
+> [!WARNING]
+> Do not just take the minimum p-value to see whether the overall stream test fails!
+> Since there are multiple tests being performed, the p-values should be adjusted accordingly.
+> See [https://en.wikipedia.org/wiki/Multiple_comparisons_problem#Controlling_procedures]
 
 ### Compressing the model
 
