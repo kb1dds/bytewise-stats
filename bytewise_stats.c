@@ -14,7 +14,7 @@
  * Output: fp = file pointer is returned to its original starting point
  *         counts = array of length 256 of counts of each byte
  */
-int bytewise_distribution( FILE *fp, int window_size, int stride, unsigned int counts[] ) {
+int byte_distribution( FILE *fp, int window_size, int stride, unsigned int counts[] ) {
   int i;
   long initial_position, bytes_read;
   unsigned char byte;
@@ -195,7 +195,7 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
  * Output: chisq_out = test statistic (or NULL if unwanted)
  * Returns: p-value for test Chi^2 goodness of fit distribution
  */
-double bytewise_distribution_compare( unsigned int reference_counts[], unsigned int observed_counts[], double *chisq_out ){
+double byte_distribution_compare( unsigned int reference_counts[], unsigned int observed_counts[], double *chisq_out ){
   int i;
   double total_reference, total_observed;
   double chisq, expected;

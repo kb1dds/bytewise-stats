@@ -48,7 +48,7 @@ int main( int argc, char *argv[] ){
       
       if( (fp_data=fopen(file,"rb")) != NULL ){
 	/* Collect distribution of bytes */
-	bytewise_distribution( fp_data, -1, 1, counts );
+	byte_distribution( fp_data, -1, 1, counts );
 
 	/* Store distribution in output file */
 	printf("%s",tag);

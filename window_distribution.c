@@ -36,7 +36,7 @@ int main( int argc, char *argv[] ){
 
   /* Consume data */
   offset = 0;
-  while(window_size == bytewise_distribution( fp_data, window_size, window_stride, counts)){
+  while(window_size == byte_distribution( fp_data, window_size, window_stride, counts)){
     /* Store distribution in output file */
     printf("%ld",offset);
     for( i = 0; i < 256; i ++ ){
