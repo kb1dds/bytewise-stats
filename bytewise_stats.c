@@ -287,6 +287,7 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
  *        observed_counts = histogram of counts for test distribution (array of 256)
  * Output: chisq_out = test statistic (or NULL if unwanted)
  * Returns: p-value for test Chi^2 goodness of fit distribution
+ * Note: the reference distribution counts are floored to 1 internally to avoid issues
  */
 double byte_distribution_compare( unsigned int reference_counts[], unsigned int observed_counts[], double *chisq_out ){
   int i;
@@ -297,10 +298,20 @@ double byte_distribution_compare( unsigned int reference_counts[], unsigned int 
   for( i = 0, total_reference = 0, total_observed; i < 256; i ++ ){
     total_reference += (double) reference_counts[i];
     total_observed += (double) observed_counts[i];
+
+    /* Reference counts are no less than 1 */
+    if( reference_counts[i] == 0 )
+      total_reference ++;
   }
   
   for( i = 0, chisq = 0.0; i < 256; i ++ ){
-    expected = total_observed * (double)reference_counts[i] / total_reference;
+    /* Reference counts are no less than 1 */
+    if( reference_counts[i] != 0 )
+      expected = total_observed * (double)reference_counts[i] / total_reference;
+    else
+      expected = total_observed / total_reference;
+
+    /* Accumulate chi^2 */
     chisq += (observed_counts[i]-expected)*(observed_counts[i]-expected)/expected;
   }
 
@@ -319,7 +330,6 @@ double byte_distribution_compare( unsigned int reference_counts[], unsigned int 
  */
 double chisquared_pval(double chisq, double dof){
   double cutoff, exponent;
-
   cutoff = (-1.37266 + 1.06807 * sqrt(dof));
   
   if( chisq >= (cutoff*cutoff) ){
