@@ -1,10 +1,11 @@
 # bytewise-stats: Looking a statistics of byte usage in files
 
-## Four utilities are provided:
+## Five utilities are provided:
 * `window_distribution` : runs a sliding window over a file, producing a CSV file of counts of each byte seen in each window
 * `build_distribution` : Collects counts of each byte seen in a collection of files listed in a single CSV file
 * `aggregate_nextbyte_distribution` : Collects counts of each byte that follow prefixes seen in `stdin`.  The results are deposited in a specified directory
 * `from_nextbyte_distribution` : Generates stream of bytes to `stdout` given a prefix on `stdin` based on the output of `aggregate_nextbyte_distribution`
+* `compare_byte_distributions` : Runs Chi^2 goodness of fit distribution for two byte histogram files, produced by `aggregate_nextbyte_distribution`
 
 ## PDF example
 
@@ -22,7 +23,7 @@ Memory captures of a pdp-11/45 at various stages of booting two different operat
 
 ## The next-byte distribution tools
 
-The next-byte distribution tools are effectively the same idea behind large language models (LLMs), but without any of the neural network machinery.  The are much easier to understand than LLMs.
+The next-byte distribution tools are effectively the same idea behind large language models (LLMs), but without any of the neural network machinery.  The are much easier to understand than LLMs.  They also admit rigorous statistical tests.
 
 These tools collect the empircal distribution of tokens that follow a given prefix.  The tradeoff is that they do not scale to handle big prefixes (aka. context windows).  
 
@@ -33,6 +34,7 @@ Only the standard C libraries are needed to build on Linux:
 ```
 cc bytewise_stats.c aggregate_nextbyte_distribution.c -o aggregate_nextbyte_distribution
 cc bytewise_stats.c from_nextbyte_distribution.c -lm -DANSI_COLOR -o from_nextbyte_distribution
+cc bytewise_stats.c compare_byte_distribution.c -lm -o compare_byte_distribution
 ```
 
 ### Training and running
