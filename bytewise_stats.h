@@ -5,9 +5,13 @@
 
 #ifndef _BYTEWISE_STATS_H_
 #define _BYTEWISE_STATS_H_
+
+#define MAX_WINDOW_SIZE 1024
+
 int byte_distribution( FILE *fp, int window_size, int stride, unsigned int counts[] );
 int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size );
 void index_filename( char *index_file, char *index_path, unsigned char *window, int window_size );
+unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts, int *fallback );
 double byte_distribution_compare( unsigned int reference_counts[], unsigned int observed_counts[], double *chisq_out );
 double chisquared_pval(double chisq, double dof);
 

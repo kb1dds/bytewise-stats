@@ -76,6 +76,11 @@ void index_filename( char *index_file, char *index_path, unsigned char *window, 
 }
 
 /* Accumuate byte counts into a directory with count files organized by prefix
+ *
+ * Input: fp = byte stream (reads until EOF encountered)
+ *        index_path = Path to histogram files
+ *        window_size = maximum size of window to use as prefix
+ * Returns: 0 if success, -1 if file error
  */
 int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
   FILE *ifp;
@@ -188,6 +193,94 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
   
   return 1;
 }
+
+/* Load conditional byte distribution given a window
+ * 
+ * Input: index_path = Path to histogram files
+ *        window = contents of window
+ *        window_size = length of window
+ * Output counts = histogram of counts for byte distribution (array of 256)
+ *	  fallback = 0: window was found, counts loaded from corresponding histogram
+ *                   1: window not found, so counts was loaded from the global byte histogram
+ *                   2: window not found, global histogram not found, so uniform distribution returned
+ */
+unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts, int *fallback ){
+  char index_file[MAX_WINDOW_SIZE*3];
+  unsigned char *window_ptr;
+  FILE *ifp;
+  int cws, i;
+
+  if( window != NULL ){
+    for( window_ptr = window, cws = window_size; cws >= 1 ; window_ptr ++, cws -- ){
+      /* Construct index filename */
+      index_filename( index_file, index_path, window_ptr, cws );
+
+#ifdef DEBUG
+      fprintf(stderr,"Trying index file (cws=%d) : %s ... ",cws,index_file);
+#endif
+    
+      if( (ifp = fopen(index_file, "rb")) != NULL){
+	/* Index file found; pull counts and exit */
+#ifdef DEBUG
+	fprintf(stderr,"found!\nRead %lu\n",fread(counts, (sizeof counts[0]), 256, ifp));
+#else
+	fread(counts, (sizeof counts[0]), 256, ifp);
+#endif
+	
+	fclose(ifp);
+
+#ifdef DEBUG
+	for( i = 0; i < 256; i ++ )
+	  fprintf(stderr,"%x:%c:%u ",i,i,counts[i]);
+	fprintf(stderr,"\n");
+#endif
+	if( fallback != NULL )
+	  *fallback = 0;
+	return cws;
+      }
+#ifdef DEBUG
+      fprintf(stderr,"not found\n");
+#endif    
+    }
+  }
+
+      /* Look for a global histogram */
+  if( fallback != NULL )
+    *fallback = 1;
+  index_filename( index_file, index_path, window_ptr, 0 );
+
+#ifdef DEBUG
+  fprintf(stderr,"Falling back to global distribution: %s...",index_file);
+#endif  
+
+  if( (ifp = fopen(index_file, "rb")) != NULL){
+    /* Index file found; pull counts and exit */
+#ifdef DEBUG
+    fprintf(stderr,"found!\nRead %lu\n",fread(counts, (sizeof counts[0]), 256, ifp));
+#else
+    fread(counts, (sizeof counts[0]), 256, ifp);
+#endif
+	
+    fclose(ifp);
+
+#ifdef DEBUG
+    for( i = 0; i < 256; i ++ )
+      fprintf(stderr,"%x:%c:%u ",i,i,counts[i]);
+    fprintf(stderr,"\n");
+#endif
+    return cws;
+  }
+  
+  /* Default is uniform distribution */
+  if( fallback != NULL )
+    *fallback = 2;
+    
+  for( i = 0; i < 256; i ++ ){
+    counts[i] = 1;
+  }
+  return 1;
+}
+
 
 /* Run Chi^2 goodness of fit test to compare two byte histograms
  * Input: expected_counts = histogram of counts for reference distribution (array of 256)

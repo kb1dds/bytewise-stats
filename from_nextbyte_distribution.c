@@ -10,11 +10,7 @@
 #include <math.h>
 #include "bytewise_stats.h"
 
-#define MAX_WINDOW_SIZE 1024
-
-unsigned char random_draw( unsigned int *counts, unsigned int *tc, double *entropy );
-
-unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts, int *fallback );
+unsigned char draw_random_byte( unsigned int *counts, unsigned int *tc, double *entropy );
 
 int main( int argc, char *argv[] ){
   int i, j, k, fallback;
@@ -35,7 +31,7 @@ int main( int argc, char *argv[] ){
 
   /* Entropy calibration */
   get_byte_distribution( argv[1], NULL, window_size, counts, NULL );
-  random_draw(counts, NULL, &default_entropy);
+  draw_random_byte(counts, NULL, &default_entropy);
 
   /* Grab prefix from stdin */
   scanf("%s",window);
@@ -54,7 +50,7 @@ int main( int argc, char *argv[] ){
     }
     get_byte_distribution( argv[1], NULL, window_size, counts, NULL );
     for( i = current_count-1; i >= 0; i --) {
-      window[i] = random_draw(counts, NULL, NULL);
+      window[i] = draw_random_byte(counts, NULL, NULL);
     }
   }
   window[window_size] = '\0';
@@ -69,7 +65,7 @@ int main( int argc, char *argv[] ){
     cws = get_byte_distribution( argv[1], window, window_size, counts, &fallback );
     
     /* Draw random character from this distribution */
-    byte = random_draw( counts, &total_count, &entropy );
+    byte = draw_random_byte( counts, &total_count, &entropy );
 
     /* Send to stdout */
 #ifdef ANSI_COLOR
@@ -99,8 +95,14 @@ int main( int argc, char *argv[] ){
   }
 }
 
-/* Draw random character from this distribution */
-unsigned char random_draw( unsigned int *counts, unsigned int *tc, double *entropy ){
+/* Draw random character from this distribution
+ *
+ * Input: counts = byte histogram to draw from (array of 256)
+ * Output: tc = total count in histogram
+ *         entropy = entropy of histogram
+ * Returns: the random byte selected
+ */
+unsigned char draw_random_byte( unsigned int *counts, unsigned int *tc, double *entropy ){
   unsigned int total_count, current_count, i, rv;
   unsigned char byte;
   double H;
@@ -133,79 +135,4 @@ unsigned char random_draw( unsigned int *counts, unsigned int *tc, double *entro
 #endif
   
   return byte;
-}
-
-
-unsigned int get_byte_distribution( char *index_path, unsigned char *window, int window_size, unsigned int *counts, int *fallback ){
-  char index_file[MAX_WINDOW_SIZE*3];
-  unsigned char *window_ptr;
-  FILE *ifp;
-  int cws, i;
-
-  if( window != NULL ){
-    for( window_ptr = window, cws = window_size; cws >= 1 ; window_ptr ++, cws -- ){
-      /* Construct index filename */
-      index_filename( index_file, index_path, window_ptr, cws );
-
-#ifdef DEBUG
-      fprintf(stderr,"Trying index file (cws=%d) : %s ... ",cws,index_file);
-#endif
-    
-      if( (ifp = fopen(index_file, "rb")) != NULL){
-	/* Index file found; pull counts and exit */
-#ifdef DEBUG
-	fprintf(stderr,"found!\nRead %lu\n",fread(counts, (sizeof counts[0]), 256, ifp));
-#else
-	fread(counts, (sizeof counts[0]), 256, ifp);
-#endif
-	
-	fclose(ifp);
-
-#ifdef DEBUG
-	for( i = 0; i < 256; i ++ )
-	  fprintf(stderr,"%x:%c:%u ",i,i,counts[i]);
-	fprintf(stderr,"\n");
-#endif
-	if( fallback != NULL )
-	  *fallback = 0;
-	return cws;
-      }
-#ifdef DEBUG
-      fprintf(stderr,"not found\n");
-#endif    
-    }
-  }
-
-      /* Look for a global histogram */
-  if( fallback != NULL )
-    *fallback = 1;
-  index_filename( index_file, index_path, window_ptr, 0 );
-
-#ifdef DEBUG
-  fprintf(stderr,"Falling back to global distribution: %s...",index_file);
-#endif  
-
-  if( (ifp = fopen(index_file, "rb")) != NULL){
-    /* Index file found; pull counts and exit */
-#ifdef DEBUG
-    fprintf(stderr,"found!\nRead %lu\n",fread(counts, (sizeof counts[0]), 256, ifp));
-#else
-    fread(counts, (sizeof counts[0]), 256, ifp);
-#endif
-	
-    fclose(ifp);
-
-#ifdef DEBUG
-    for( i = 0; i < 256; i ++ )
-      fprintf(stderr,"%x:%c:%u ",i,i,counts[i]);
-    fprintf(stderr,"\n");
-#endif
-    return cws;
-  }
-  
-  /* Default is uniform distribution */
-  for( i = 0; i < 256; i ++ ){
-    counts[i] = 1;
-  }
-  return 1;
 }
