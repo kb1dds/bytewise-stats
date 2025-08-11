@@ -1,4 +1,8 @@
+#!/bin/bash
+#
 # Generate comparison report for two next-byte distributions
+#
+# Copyright (c) 2025, Michael Robinson
 
 echo "prefix,reference_count,test_count,chisq,pvalue"
 
