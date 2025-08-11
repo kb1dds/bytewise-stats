@@ -121,10 +121,10 @@ Let's check that `from_nextbyte_distribution` really does what it says:
 ```
 mkdir ~/jnkindex
 echo "chap" | ./from_nextbyte_distribution ~/indexpath 4 1024 | tee "testfile" | ./aggregate_nextbyte_distribution ~/jnkindex 4
-sh ./compare_nextbyte_distributions ~/indexpath ~/jnkindex | awk -F',' '$3 > 3 && $5 < 1e-3'
+sh ./compare_nextbyte_distributions ~/indexpath ~/jnkindex | awk -F',' '$2 > 3 && $3 > 3 && $5 < 1e-3'
 ```
 
-This checks to see if there are any prefixes for which the test file has more than 3 instances in which the p-value is less than 1e-3.  For a short file (1024 bytes), there should not be any, so the last line should not return anything!  If it does, you can investigate the `testfile` that is produced on the second line.
+This checks to see if there are any prefixes for which there are more than 3 instances in both sets, and for which the p-value is less than 1e-3.  For a short file (1024 bytes), there should not be any, so the last line should not return anything!  If it does, you can investigate the `testfile` that is produced on the second line.
 
 ### Compressing the model
 
