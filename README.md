@@ -5,8 +5,8 @@
 * `build_distribution` : Collects counts of each byte seen in a collection of files listed in a single CSV file
 * `aggregate_nextbyte_distribution` : Collects counts of each byte that follow prefixes seen in `stdin`.  The results are deposited in a specified directory
 * `from_nextbyte_distribution` : Generates stream of bytes to `stdout` given a prefix on `stdin` based on the output of `aggregate_nextbyte_distribution`
-* `compare_nextbyte_distributions` : Runs Chi^2 goodness of fit test for two next byte reports produced by `aggregate_nextbyte_distribution`
-* `compare_byte_distributions` : Runs Chi^2 goodness of fit test for two byte histogram files, each of which was one of the files made by `aggregate_nextbyte_distribution`
+* `[next]byte_distribution_stats` : Produces some potentially useful statistics about the distributions produced by `aggregate_nextbyte_distribution`
+* `compare_[next]byte_distributions` : Runs Chi^2 goodness of fit test for two distributions produced by `aggregate_nextbyte_distribution`
 
 ## PDF example
 
@@ -63,6 +63,13 @@ The output bytes are colored:
 > If you wish to disable colors, there is a compile-time flag ANSI_COLOR in the above build command that can be removed.
 
 It is not required that the context window sizes match.  If there's a mismatch, the content will be cropped accordingly.  In particular, as the model runs, it starts with the stated context window size.  If the current prefix is not found with that size, the prefix is repeatedly cropped (removing bytes from the beginning) until either a match is found or the window is exhausted.  If the window is exhausted, the distribution of all bytes is used as a fallback (output bytes colored red).  Fallbacks should be very rare except when starting off, since no approximations are being used.
+
+### Examining statistics
+
+You can get a collection of statistics about a trained model using
+```
+sh nextbyte_distribution_stats ~/model > results.csv
+```
 
 ### Comparing models
 
