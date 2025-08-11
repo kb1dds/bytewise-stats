@@ -13,7 +13,7 @@
 unsigned char draw_random_byte( unsigned int *counts, unsigned int *tc, double *entropy );
 
 int main( int argc, char *argv[] ){
-  int i, j, k, fallback;
+  int i, j, k, fallback, allow_varying_window;
   unsigned int count, counts[256], total_count, current_count, rv, window_size, cws;
   unsigned char window[MAX_WINDOW_SIZE], byte;
   double entropy, default_entropy;
@@ -26,8 +26,18 @@ int main( int argc, char *argv[] ){
     exit(-1);
   }
 
-  sscanf(argv[2],"%d",&window_size);
+  sscanf(argv[2],"%d",&allow_varying_window);
   sscanf(argv[3],"%d",&count);
+
+  /* If window_size as passed in is negative, then caller permits window size to vary randomly */
+  if( allow_varying_window < 0 ){
+    window_size = -allow_varying_window;
+    allow_varying_window = 1;
+  }
+  else{
+    window_size = allow_varying_window;
+    allow_varying_window = 0;
+  }
 
   /* Entropy calibration */
   get_byte_distribution( argv[1], NULL, window_size, counts, NULL );
@@ -58,11 +68,19 @@ int main( int argc, char *argv[] ){
   printf("%s", window);
 
   for( j = 0; j < count; j ++ ){
-    /* Get distribution for this window */
+    /* Variable window size logic */
+    if( allow_varying_window ){
+      cws = 2+(unsigned int)( (double)rand() * (double) (window_size-1) / (double) RAND_MAX);
+    }
+    else
+      cws = window_size;
+
 #ifdef DEBUG
-    fprintf(stderr,"Window: %s\n", window);
+    fprintf(stderr,"Window (size = %d) : %s\n", cws, window);
 #endif
-    cws = get_byte_distribution( argv[1], window, window_size, counts, &fallback );
+
+    /* Get distribution for this window */
+    get_byte_distribution( argv[1], window, cws, counts, &fallback );
     
     /* Draw random character from this distribution */
     byte = draw_random_byte( counts, &total_count, &entropy );

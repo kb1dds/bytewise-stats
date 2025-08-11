@@ -64,6 +64,9 @@ The output bytes are colored:
 
 It is not required that the context window sizes match.  If there's a mismatch, the content will be cropped accordingly.  In particular, as the model runs, it starts with the stated context window size.  If the current prefix is not found with that size, the prefix is repeatedly cropped (removing bytes from the beginning) until either a match is found or the window is exhausted.  If the window is exhausted, the distribution of all bytes is used as a fallback (output bytes colored red).  Fallbacks should be very rare except when starting off, since no approximations are being used.
 
+> [!NOTE]
+> If you pass a negative context window size, then for each byte a context window size between 2 and (-window size) will be selected randomly.
+
 ### Examining statistics
 
 You can get a collection of statistics about a trained model using
