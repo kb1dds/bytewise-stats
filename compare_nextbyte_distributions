@@ -1,5 +1,7 @@
 # Generate comparison report for two next-byte distributions
 
+echo "prefix,reference_count,test_count,chisq,pvalue"
+
 for fl in `ls $2`;
 do
     if [ -e $1/$fl ]; then

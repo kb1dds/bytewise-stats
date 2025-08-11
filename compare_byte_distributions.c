@@ -11,6 +11,8 @@ int main( int argc, char *argv[] ){
   FILE *fp;
   unsigned int reference_counts[256], test_counts[256];
   double chisq, p;
+  int i;
+  unsigned int reference_total, test_total;
 
   if( argc != 3 ){
     fprintf(stderr,"Usage: compare_byte_distributions reference_file test_file\n");
@@ -31,7 +33,12 @@ int main( int argc, char *argv[] ){
   fread(test_counts,(sizeof test_counts),256,fp);
   fclose(fp);
 
+  for( i = 0, reference_total = 0, test_total = 0; i < 256; i ++ ){
+    reference_total += reference_counts[i];
+    test_total += test_counts[i];
+  }
+
   p = byte_distribution_compare( reference_counts, test_counts, &chisq );
 
-  printf("%g,%g\n",chisq,p);
+  printf("%d,%d,%g,%g\n",reference_total,test_total,chisq,p);
 }

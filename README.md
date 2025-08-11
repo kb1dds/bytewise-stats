@@ -79,7 +79,12 @@ So, if you want to ask whether a single histogram from the test data could have 
 compare_byte_histograms ~/model_reference/null ~/model_test/null
 ```
 
-This produces two numbers, separated by a comma: the Chi^2 value for the test, and the associated p-value for the test.  Smaller p-values mean that the distributions are more different.
+This produces four comma-separated numbers:  
+
+1. "reference_count" : how many total instances of this prefix were found in the reference distribution
+2. "test_count" : how many total instances of this prefix were found in the test distribution
+3. "chisq" : the resulting chi^2 value for the test 
+4. "pvalue" : the resulting p-value for the test. Smaller p-values mean that the distributions are more different.
 
 > [!TIP]
 > The Chi^2 test is not commutative; running the arguments in the opposite order will give different results.
@@ -91,14 +96,35 @@ If you want to check all next byte conditional distributions to see if a given b
 ```
 mkdir ~/test_index
 cat file_of_interest | ./aggregate_nextbyte_distribution ~/test_index 4
-echo "prefix,chisq,pvalue" > results.csv
-sh compare_nextbyte_distributions ~/model_reference ~/test_index >> results.csv
+sh compare_nextbyte_distributions ~/model_reference ~/test_index > results.csv
 ```
+
+The resulting CSV file has the following columns:
+
+1. "prefix" : The hex string prefix for the conditional histogram being tested
+2. "reference_count" : how many total instances of this prefix were found in the reference data
+3. "test_count" : how many total instances of this prefix were found in the test data
+4. "chisq" : the resulting chi^2 value for the test
+5. "pvalue" : the resulting p-value for the test
+
+If either the "test_count" or "reference_count" values are small, the test is likely to be unreliable.
 
 > [!WARNING]
 > Do not just take the minimum p-value to see whether the overall stream test fails!
 > Since there are multiple tests being performed, the p-values should be adjusted accordingly.
 > See [https://en.wikipedia.org/wiki/Multiple_comparisons_problem#Controlling_procedures]
+
+#### Case study: verifying the output of `from_nextbyte_distribution`
+
+Let's check that `from_nextbyte_distribution` really does what it says:
+
+```
+mkdir ~/jnkindex
+echo "chap" | ./from_nextbyte_distribution ~/indexpath 4 1024 | tee "testfile" | ./aggregate_nextbyte_distribution ~/jnkindex 4
+sh ./compare_nextbyte_distributions ~/indexpath ~/jnkindex | awk -F',' '$3 > 3 && $5 < 1e-3'
+```
+
+This checks to see if there are any prefixes for which the test file has more than 3 instances in which the p-value is less than 1e-3.  For a short file (1024 bytes), there should not be any, so the last line should not return anything!  If it does, you can investigate the `testfile` that is produced on the second line.
 
 ### Compressing the model
 
