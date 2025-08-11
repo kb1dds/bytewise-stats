@@ -344,11 +344,11 @@ double chisquared_pval(double chisq, double dof){
     return exp(-1.0 * X);
 
   /* Otherwise use the incomplete gamma function for the numerator */
-  K = ((double)dof) * 0.5;
+  K = dof * 0.5;
   pvalue = igf(K, X);
 
   /* Error handling */
-  if(isnan(pvalue) || isinf(pvalue) || pvalue <= 1e-8)
+  if(isnan(pvalue) || isinf(pvalue))
     return 1e-14;
 
   /* Gamma function in the denominator */
@@ -375,7 +375,7 @@ static double igf(double S, double Z)
   Sc *= exp(-Z);
 
   /* Power series terms; run until they get small */
-  for( sum = 1.0, num = 1.0, denom = 1.0; (num / denom) > 1e-6; ){
+  for( sum = 1.0, num = 1.0, denom = 1.0; (num / denom) > 1e-8; ){
     num *= Z;
     S++;
     denom *= S;
