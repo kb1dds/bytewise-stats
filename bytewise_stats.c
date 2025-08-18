@@ -323,6 +323,35 @@ double byte_distribution_compare( unsigned int reference_counts[], unsigned int 
   return chisquared_pval( chisq, 255 );
 }
 
+/* What's the probability that this byte or one less common was drawn from a given distribution?
+ *
+ * Input: reference_counts = histogram of counts for reference distribution (array of 256)
+ *        byte             = the byte to test
+ * Output: none
+ * Returns: p-value for the test
+ */
+double onebyte_pval( unsigned int reference_counts[], unsigned char byte ){
+  int i;
+  double total_count; 
+  double pvalue, byte_probability, ptemp;
+
+  /* Total number of bytes in distribution */
+  for( i = 0, total_count = 0.0; i < 256; i ++ )
+    total_count += (double) reference_counts[i];
+
+  /* This byte's probability */
+  byte_probability = (double)reference_counts[byte];
+
+  /* Aggregate tail of distribution */
+  for( i = 0, pvalue = 0.; i < 256; i ++ ){
+    ptemp = (double)reference_counts[byte];
+    if( i == byte || ptemp <= byte_probability )
+      pvalue += ptemp;
+  }
+
+  return pvalue / total_count;
+}
+
 /* Estimate p-value for Chi^2 distribution
  * Based upon the code at
  *  [https://www.codeproject.com/Articles/432194/How-to-Calculate-the-Chi-Squared-P-Value]
