@@ -8,10 +8,6 @@ echo "prefix,reference_count,test_count,chisq,pvalue"
 
 for fl in `ls $2`;
 do
-    if [ -e $1/$fl ]; then
-	echo -n "$fl,"
-	./compare_byte_distributions $1/$fl $2/$fl
-    else
-	echo "$fl,inf,0"
-    fi
+    echo -n "$fl,"
+    ./compare_byte_distributions $1/$fl $2/$fl
 done
