@@ -15,8 +15,8 @@ unsigned char draw_random_byte( unsigned int *counts, unsigned int *tc, double *
 int main( int argc, char *argv[] ){
   int i, j, k, fallback, allow_varying_window;
   unsigned int count, counts[256], total_count, current_count, rv, window_size, cws;
-  unsigned char window[MAX_WINDOW_SIZE], byte;
-  double entropy, default_entropy;
+  unsigned char window[MAX_WINDOW_SIZE], byte, current_byte;
+  double entropy, default_entropy, current_entropy;
 
   /* Seed for random */
   srand(time(NULL));
@@ -68,23 +68,37 @@ int main( int argc, char *argv[] ){
   printf("%s", window);
 
   for( j = 0; j < count; j ++ ){
-    /* Variable window size logic */
     if( allow_varying_window ){
-      cws = 2+(unsigned int)( (double)rand() * (double) (window_size-1) / (double) RAND_MAX);
+      /* Variable window size logic */
+      for( cws = window_size, entropy = -1; cws >= 2; cws -- ){
+	/* Get distribution for this window */
+	get_byte_distribution( argv[1], window, cws, counts, &fallback );
+
+	/* Draw random character from this distribution */
+	current_byte = draw_random_byte( counts, &total_count, &current_entropy );
+
+	/* Select the lowest entropy window */
+	if( entropy < 0 || current_entropy < entropy ){
+	  byte = current_byte;
+	  entropy = current_entropy;
+	}
+      }
     }
-    else
+    else{
+      /* Fixed window size */
       cws = window_size;
 
 #ifdef DEBUG
-    fprintf(stderr,"Window (size = %d) : %s\n", cws, window);
+      fprintf(stderr,"Window (size = %d) : %s\n", cws, window);
 #endif
 
-    /* Get distribution for this window */
-    get_byte_distribution( argv[1], window, cws, counts, &fallback );
+      /* Get distribution for this window */
+      get_byte_distribution( argv[1], window, cws, counts, &fallback );
     
-    /* Draw random character from this distribution */
-    byte = draw_random_byte( counts, &total_count, &entropy );
-
+      /* Draw random character from this distribution */
+      byte = draw_random_byte( counts, &total_count, &entropy );
+    }
+    
     /* Send to stdout */
 #ifdef ANSI_COLOR
     i = (int)(255*(default_entropy - entropy)/default_entropy);
