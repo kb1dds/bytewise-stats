@@ -36,7 +36,8 @@ int main( int argc, char *argv[] ){
     fread(test_counts,(sizeof test_counts),256,fp);
     fclose(fp);
   }
-  
+
+  /* Collect counts for each model */
   for( i = 0; i < 256; i ++ ){
     if(reference_total >= 0 )
       reference_total += reference_counts[i];
@@ -45,6 +46,7 @@ int main( int argc, char *argv[] ){
       test_total += test_counts[i];
   }
 
+  /* Run the test if possible */
   if( reference_total >= 0 && test_total >= 0 ){
     p = byte_distribution_compare( reference_counts, test_counts, &chisq );
   }
@@ -52,6 +54,12 @@ int main( int argc, char *argv[] ){
     chisq = 1e100;
     p = 0;
   }
+
+  /* Set counts correct now that the tests are run */
+  if( reference_total < 0 )
+    reference_total = 0;
+  if( test_total < 0 )
+    test_total = 0;
   
   printf("%d,%d,%g,%g\n",reference_total,test_total,chisq,p);
 }
