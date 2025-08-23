@@ -8,6 +8,7 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <unistd.h>
 #include "bytewise_stats.h"
 
 unsigned char draw_random_byte( unsigned int *counts, unsigned int *tc, double *entropy );
@@ -17,9 +18,10 @@ int main( int argc, char *argv[] ){
   unsigned int count, counts[256], total_count, current_count, rv, window_size, cws;
   unsigned char window[MAX_WINDOW_SIZE], byte, current_byte;
   double entropy, default_entropy, current_entropy;
+  int seed = time(NULL) ^ getpid();
 
   /* Seed for random */
-  srand(time(NULL));
+  srand(seed);
   
   if( argc != 4 ){
     fprintf(stderr,"Usage: from_nextbyte_distribution index_directory window_size count\n");
