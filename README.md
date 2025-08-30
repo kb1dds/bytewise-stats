@@ -1,12 +1,13 @@
 # bytewise-stats: Looking a statistics of byte usage in files
 
-## Six utilities are provided:
+## Seven utilities are provided:
 * `window_distribution` : runs a sliding window over a file, producing a CSV file of counts of each byte seen in each window
 * `build_distribution` : Collects counts of each byte seen in a collection of files listed in a single CSV file
 * `aggregate_nextbyte_distribution` : Collects counts of each byte that follow prefixes seen in `stdin`.  The results are deposited in a specified directory
 * `from_nextbyte_distribution` : Generates stream of bytes to `stdout` given a prefix on `stdin` based on the output of `aggregate_nextbyte_distribution`
 * `[next]byte_distribution_stats` : Produces some potentially useful statistics about the distributions produced by `aggregate_nextbyte_distribution`
 * `compare_[next]byte_distributions` : Runs Chi^2 goodness of fit test for two distributions produced by `aggregate_nextbyte_distribution`
+* `colorby_nextbyte_distribution` : Colorizes stdin (output to stdout) based upon probability of each next byte
 
 ## PDF example
 
@@ -73,6 +74,15 @@ You can get a collection of statistics about a trained model using
 ```
 sh nextbyte_distribution_stats ~/model > results.csv
 ```
+
+### Colorizing text based upon probability
+
+It is sometimes useful to see which bytes are more unexpected in the bytestream given the distribution already aggregated.
+A command like the following will ANSI-colorize a bytestream,
+```
+cat file_of_interest | ./colorby_nextbyte_distribution ~/model 4
+```
+with brighter colors corresponding to bytes of higher probability.  Red indicates that a byte was not expected at all (probability zero).
 
 ### Comparing models
 

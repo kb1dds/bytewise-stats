@@ -344,7 +344,7 @@ double onebyte_pval( unsigned int reference_counts[], unsigned char byte ){
 
   /* Aggregate tail of distribution */
   for( i = 0, pvalue = 0.; i < 256; i ++ ){
-    ptemp = (double)reference_counts[byte];
+    ptemp = (double)reference_counts[i];
     if( i == byte || ptemp <= byte_probability )
       pvalue += ptemp;
   }
