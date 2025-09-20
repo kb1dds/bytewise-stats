@@ -84,7 +84,7 @@ cat file_of_interest | ./colorby_nextbyte_distribution ~/model 4
 ```
 with brighter colors corresponding to bytes of higher probability.  Red indicates that a byte was not expected at all (probability zero).
 
-### Guessing where spaces might got
+### Guessing where spaces might go
 
 As a fun experiment, if you remove spaces between words, you can attempt to re-add them back at local probability minima
 ```
