@@ -1,6 +1,6 @@
 # bytewise-stats: Looking a statistics of byte usage in files
 
-## Seven utilities are provided:
+## Eight utilities are provided:
 * `window_distribution` : runs a sliding window over a file, producing a CSV file of counts of each byte seen in each window
 * `build_distribution` : Collects counts of each byte seen in a collection of files listed in a single CSV file
 * `aggregate_nextbyte_distribution` : Collects counts of each byte that follow prefixes seen in `stdin`.  The results are deposited in a specified directory
@@ -8,6 +8,7 @@
 * `[next]byte_distribution_stats` : Produces some potentially useful statistics about the distributions produced by `aggregate_nextbyte_distribution`
 * `compare_[next]byte_distributions` : Runs Chi^2 goodness of fit test for two distributions produced by `aggregate_nextbyte_distribution`
 * `colorby_nextbyte_distribution` : Colorizes stdin (output to stdout) based upon probability of each next byte
+* `spaceby_nextbyte_distribution` : Inserts spaces into stdin (output to stdout) based upon probability local minima
 
 ## PDF example
 
@@ -82,6 +83,13 @@ A command like the following will ANSI-colorize a bytestream,
 cat file_of_interest | ./colorby_nextbyte_distribution ~/model 4
 ```
 with brighter colors corresponding to bytes of higher probability.  Red indicates that a byte was not expected at all (probability zero).
+
+### Guessing where spaces might got
+
+As a fun experiment, if you remove spaces between words, you can attempt to re-add them back at local probability minima
+```
+cat some_text.txt | sed -z "s/\n//g; s/ //g; s/[[:punct:]]//g" | tr '[:upper:]' '[:lower:]' | ./spaceby_nextbyte_distribution ~/model 5
+```
 
 ### Comparing models
 
