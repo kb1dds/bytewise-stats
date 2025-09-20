@@ -21,7 +21,7 @@ int main( int argc, char *argv[] ){
   double p;
   
   if( argc != 3 ){
-    fprintf(stderr,"Usage: coloby_nextbyte_distribution index_directory window_size\n");
+    fprintf(stderr,"Usage: colorby_nextbyte_distribution index_directory window_size\n");
     exit(-1);
   }
 
