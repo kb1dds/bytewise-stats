@@ -12,6 +12,7 @@ aggregate_nextbyte_distribution: bytewise_stats
 
 from_nextbyte_distribution: bytewise_stats
 	gcc bytewise_stats.o from_nextbyte_distribution.c -lm -o from_nextbyte_distribution
+	gcc bytewise_stats.o from_nextbyte_distribution.c -lm -DANSI_COLOR -o from_nextbyte_distribution_colored
 
 byte_distribution_stats: bytewise_stats
 	gcc bytewise_stats.o byte_distribution_stats.c -lm -o byte_distribution_stats
