@@ -283,6 +283,41 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
   return 1;
 }
 
+/* Given an open index file, read the counts from it
+ * Inputs: ifp = FILE pointer at the beginning of index file
+ * Outputs: counts = histogram of counts for reference distribution (array of 256)
+ * Returns: -1 if file ended unexpectedly
+ */
+int read_index_file( FILE *ifp, unsigned int *counts ){
+  unsigned char k;
+
+  for( k = 0; k < 256; k ++ ){
+    counts[k] = 0;
+  }
+
+  while( fread(&k, (sizeof k), 1, ifp) == 1 ){
+    /* NB: since we assume counts has length at least 256, we don't need to bounds check k */
+    if( fread(&counts[k], (sizeof counts[0]), 1, ifp) < (sizeof counts[0]) )
+      return -1;
+  }
+  return 0;
+}
+
+/* Given an open index file, write counts into it
+ * Inputs: ifp = FILE pointer at the beginning of index file
+ *         counts = histogram of counts for reference distribution (array of 256)
+ */
+int write_index_file( FILE *ifp, unsigned int counts[] ){
+  unsigned char k;
+
+  for( k = 0; k < 256; k ++ ){
+    if( counts[k] != 0 ){
+      fwrite( &k, (sizeof k), 1, ifp ); /* Byte value */
+      fwrite( &counts[k], (sizeof counts[0]), 1, ifp ); /* Histogram count value */
+    }
+  }
+  return 0;
+}
 
 /* Run Chi^2 goodness of fit test to compare two byte histograms
  * Input: expected_counts = histogram of counts for reference distribution (array of 256)
