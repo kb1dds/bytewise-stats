@@ -257,7 +257,7 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
   if( (ifp = fopen(index_file, "rb")) != NULL){
     /* Index file found; pull counts and exit */
 #ifdef DEBUG
-    fprintf(stderr,"found!\n")
+    fprintf(stderr,"found!\n");
 #endif
 
       if(read_index_file( ifp, counts )){
@@ -293,16 +293,20 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
  * Returns: -1 if file ended unexpectedly
  */
 int read_index_file( FILE *ifp, unsigned int *counts ){
-  unsigned char k;
+  int k;
+  unsigned char byte;
 
   for( k = 0; k < 256; k ++ ){
     counts[k] = 0;
   }
 
-  while( fread(&k, (sizeof k), 1, ifp) == 1 ){
+  while( fread(&byte, (sizeof byte), 1, ifp) == 1 ){
     /* NB: since we assume counts has length at least 256, we don't need to bounds check k */
-    if( fread(&counts[k], (sizeof counts[0]), 1, ifp) < (sizeof counts[0]) )
+    k = byte;
+    if( fread(&counts[k], (sizeof counts[0]), 1, ifp) < 1 ){
+      fprintf(stderr,"oops\n");
       return -1;
+    }
   }
   return 0;
 }
@@ -312,11 +316,13 @@ int read_index_file( FILE *ifp, unsigned int *counts ){
  *         counts = histogram of counts for reference distribution (array of 256)
  */
 int write_index_file( FILE *ifp, unsigned int counts[] ){
-  unsigned char k;
+  int k;
+  unsigned char byte;
 
   for( k = 0; k < 256; k ++ ){
     if( counts[k] != 0 ){
-      fwrite( &k, (sizeof k), 1, ifp ); /* Byte value */
+      byte = k;
+      fwrite( &byte, (sizeof byte), 1, ifp ); /* Byte value */
       fwrite( &counts[k], (sizeof counts[0]), 1, ifp ); /* Histogram count value */
     }
   }
