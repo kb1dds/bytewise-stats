@@ -15,30 +15,35 @@ unsigned char draw_random_byte( unsigned int *counts, unsigned int *tc, double *
 
 int main( int argc, char *argv[] ){
   int i, j, k, fallback, allow_varying_window;
-  unsigned int count, counts[256], total_count, current_count, rv, window_size, cws;
+  unsigned int count, counts[256], counts_temp[256], total_count, current_count, rv, window_size, cws;
   unsigned char window[MAX_WINDOW_SIZE], byte, current_byte;
-  double entropy, default_entropy, current_entropy;
+  double entropy, default_entropy, current_entropy, temperature;
   int seed = time(NULL) ^ getpid();
 
   /* Seed for random */
   srand(seed);
   
-  if( argc != 4 ){
-    fprintf(stderr,"Usage: from_nextbyte_distribution index_directory window_size count\n");
+  if( (argc != 4) && (argc != 5) ){
+    fprintf(stderr,"Usage: from_nextbyte_distribution index_directory window_size count [temperature]\n");
     exit(-1);
   }
 
   sscanf(argv[2],"%d",&allow_varying_window);
   sscanf(argv[3],"%d",&count);
 
-  /* If window_size as passed in is negative, then caller permits window size to vary randomly */
+  if( argc == 5 )
+    sscanf(argv[4],"%lf",&temperature);
+  else
+    temperature = 0.;
+
+  /* If window_size as passed in is negative, then caller wants a specific window size only */
   if( allow_varying_window < 0 ){
     window_size = -allow_varying_window;
-    allow_varying_window = 1;
+    allow_varying_window = 0;
   }
   else{
     window_size = allow_varying_window;
-    allow_varying_window = 0;
+    allow_varying_window = 1;
   }
 
   /* Entropy calibration */
@@ -70,36 +75,29 @@ int main( int argc, char *argv[] ){
   printf("%s", window);
 
   for( j = 0; j < count; j ++ ){
-    if( allow_varying_window ){
-      /* Variable window size logic */
-      for( cws = window_size, entropy = -1; cws >= 2; cws -- ){
-	/* Get distribution for this window */
-	get_byte_distribution( argv[1], window, cws, counts, &fallback );
 
-	/* Draw random character from this distribution */
-	current_byte = draw_random_byte( counts, &total_count, &current_entropy );
+    /* Variable window size empirical Bayesian estimation */
+    if( temperature > 0. && allow_varying_window ){
+      /* Initialize distribution */
+      for( k = 0; k < 256; k ++ )
+	counts[k] = 0;
 
-	/* Select the lowest entropy window */
-	if( entropy < 0 || current_entropy < entropy ){
-	  byte = current_byte;
-	  entropy = current_entropy;
+      /* Load distributions from shorter windows */
+      for( cws = 3; cws <= window_size; cws ++ ){
+	get_byte_distribution( argv[1], window + (window_size-cws), cws, counts_temp, &fallback );
+
+	/* Accumulate with weights */
+	for( k = 0; k < 256; k ++ ){
+	  if( counts_temp[k] )
+	    counts[k] += (int)(pow(temperature,window_size-cws) * (1-temperature) * window_size * counts_temp[k]);
 	}
       }
     }
-    else{
-      /* Fixed window size */
-      cws = window_size;
-
-#ifdef DEBUG
-      fprintf(stderr,"Window (size = %d) : %s\n", cws, window);
-#endif
-
-      /* Get distribution for this window */
-      get_byte_distribution( argv[1], window, cws, counts, &fallback );
+    else
+      get_byte_distribution( argv[1], window, window_size, counts, &fallback );
     
-      /* Draw random character from this distribution */
-      byte = draw_random_byte( counts, &total_count, &entropy );
-    }
+    /* Draw random character from this distribution */
+    byte = draw_random_byte( counts, &total_count, &entropy );
     
     /* Send to stdout */
 #ifdef ANSI_COLOR
