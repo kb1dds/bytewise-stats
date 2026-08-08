@@ -17,14 +17,14 @@ int main( int argc, char *argv[] ){
   int i, j, k, fallback, allow_varying_window;
   unsigned int count, counts[256], counts_temp[256], total_count, current_count, rv, window_size, cws;
   unsigned char window[MAX_WINDOW_SIZE], byte, current_byte;
-  double entropy, default_entropy, current_entropy, temperature;
+  double entropy, default_entropy, current_entropy, shrinkage_factor;
   int seed = time(NULL) ^ getpid();
 
   /* Seed for random */
   srand(seed);
   
   if( (argc != 4) && (argc != 5) ){
-    fprintf(stderr,"Usage: from_nextbyte_distribution index_directory window_size count [temperature]\n");
+    fprintf(stderr,"Usage: from_nextbyte_distribution index_directory window_size count [shrinkage_factor]\n");
     exit(-1);
   }
 
@@ -32,9 +32,9 @@ int main( int argc, char *argv[] ){
   sscanf(argv[3],"%d",&count);
 
   if( argc == 5 )
-    sscanf(argv[4],"%lf",&temperature);
+    sscanf(argv[4],"%lf",&shrinkage_factor);
   else
-    temperature = 0.;
+    shrinkage_factor = 0.;
 
   /* If window_size as passed in is negative, then caller wants a specific window size only */
   if( allow_varying_window < 0 ){
@@ -77,7 +77,7 @@ int main( int argc, char *argv[] ){
   for( j = 0; j < count; j ++ ){
 
     /* Variable window size empirical Bayesian estimation */
-    if( temperature > 0. && allow_varying_window ){
+    if( shrinkage_factor > 0. && allow_varying_window ){
       /* Initialize distribution */
       for( k = 0; k < 256; k ++ )
 	counts[k] = 0;
@@ -89,7 +89,7 @@ int main( int argc, char *argv[] ){
 	/* Accumulate with weights */
 	for( k = 0; k < 256; k ++ ){
 	  if( counts_temp[k] )
-	    counts[k] += (int)(pow(temperature,window_size-cws) * (1-temperature) * window_size * counts_temp[k]);
+	    counts[k] += (int)(pow(shrinkage_factor,window_size-cws) * (1-shrinkage_factor) * window_size * counts_temp[k]);
 	}
       }
     }
