@@ -23,7 +23,7 @@ int main( int argc, char *argv[] ){
     fprintf(stderr,"Error opening: %s\n",argv[1]);
     exit(-1);
   }
-  fread(counts,(sizeof counts),256,fp);
+  read_index_file(fp, counts);
   fclose(fp);
 
   for( total_count = 0, i = 0, max_byte = 0, max_count = 0, nz = 0; i < 256; i ++ ){

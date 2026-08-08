@@ -24,7 +24,7 @@ int main( int argc, char *argv[] ){
   }
   else{
     reference_total = 0;
-    fread(reference_counts,(sizeof reference_counts),256,fp);
+    read_index_file(fp, reference_counts);
     fclose(fp);
   }
   
@@ -33,7 +33,7 @@ int main( int argc, char *argv[] ){
   }
   else{
     test_total = 0;
-    fread(test_counts,(sizeof test_counts),256,fp);
+    read_index_file(fp, test_counts);
     fclose(fp);
   }
 

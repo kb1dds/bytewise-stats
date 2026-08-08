@@ -134,25 +134,19 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
 #endif
 	/* If index file does not exist, set all counts to zero except the next byte, which is 1 */
 	for( k = 0; k < 256; k ++ ){
-	  if( k == window[cws] ){
-	    count = 1;
-#ifdef DEBUG
-	    printf("Character %x now has count 1\n", k);
-#endif
-	  }
+	  if( k == window[cws] )
+	    oldcounts[k] = 1;
 	  else
-	    count = 0;
-	  
-	  fwrite( &count, (sizeof count), 1, ifp );
+	    oldcounts[k] = 0;
 	}
+	write_index_file( ifp, oldcounts );
       }
       else{
 	/* Increment count in index file */
-	fseek( ifp, (sizeof count)*window[cws], SEEK_SET );
-	fread( &count, (sizeof count), 1, ifp );
-	fseek( ifp, (sizeof count)*window[cws], SEEK_SET );
-	count ++;
-	fwrite( &count, (sizeof count), 1, ifp );
+	read_index_file( ifp, oldcounts );
+	oldcounts[window[cws]] ++;
+	fseek( ifp, 0, SEEK_SET );
+	write_index_file( ifp, oldcounts );
       }
 
       /* Close index file */
@@ -181,15 +175,15 @@ int byte_prefixed_distribution( FILE *fp, char *index_path, int window_size ){
     if( (ifp = fopen(index_file, "wb")) == NULL )
       return -1; /* Fatal error */
 
-    fwrite(counts,(sizeof count),256,ifp);
+    write_index_file(ifp, counts);
   }
   else{
-    fread(oldcounts,(sizeof count),256,ifp);
+    read_index_file(ifp, oldcounts);
     fseek( ifp, 0, SEEK_SET );
     for( i = 0; i < 256; i ++ ){
       counts[i] += oldcounts[i];
     }
-    fwrite(counts,(sizeof count),256,ifp);
+    write_index_file(ifp, counts);
   }
   fclose(ifp);
   
@@ -224,12 +218,17 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
       if( (ifp = fopen(index_file, "rb")) != NULL){
 	/* Index file found; pull counts and exit */
 #ifdef DEBUG
-	fprintf(stderr,"found!\nRead %lu\n",fread(counts, (sizeof counts[0]), 256, ifp));
-#else
-	fread(counts, (sizeof counts[0]), 256, ifp);
+	fprintf(stderr,"found!\n");
 #endif
-	
-	fclose(ifp);
+	if(read_index_file( ifp, counts )){
+#ifdef DEBUG
+	  fprintf(stderr,"index file malformed\n");
+#endif
+	  fclose(ifp);
+	  break;
+	}
+	else
+	  fclose(ifp);
 
 #ifdef DEBUG
 	for( i = 0; i < 256; i ++ )
@@ -254,17 +253,22 @@ unsigned int get_byte_distribution( char *index_path, unsigned char *window, int
 #ifdef DEBUG
   fprintf(stderr,"Falling back to global distribution: %s...",index_file);
 #endif  
-
+  
   if( (ifp = fopen(index_file, "rb")) != NULL){
     /* Index file found; pull counts and exit */
 #ifdef DEBUG
-    fprintf(stderr,"found!\nRead %lu\n",fread(counts, (sizeof counts[0]), 256, ifp));
-#else
-    fread(counts, (sizeof counts[0]), 256, ifp);
+    fprintf(stderr,"found!\n")
 #endif
-	
-    fclose(ifp);
 
+      if(read_index_file( ifp, counts )){
+#ifdef DEBUG
+	fprintf(stderr,"index file malformed\n");
+#endif
+	fclose(ifp);
+      }
+      else
+	fclose(ifp);
+    
 #ifdef DEBUG
     for( i = 0; i < 256; i ++ )
       fprintf(stderr,"%x:%c:%u ",i,i,counts[i]);
