@@ -153,7 +153,7 @@ sh ./compare_nextbyte_distributions ~/indexpath ~/jnkindex | awk -F',' '$2 > 3 &
 
 This checks to see if there are any prefixes for which there are more than 3 instances in both sets, and for which the p-value is less than 1e-3.  For a short file (1024 bytes), there should not be any, so the last line should not return anything!  If it does, you can investigate the `testfile` that is produced on the second line.
 
-### Compressing the model
+### Compressing the model or speeding it
 
 Given that models can get big, it might be desirable to compress them.  This results in a performance loss, but might be useful if you want to share the model.  Since the programs are quite simplistic and use the filesystem as hash table, you can use [SquashFS](https://docs.kernel.org/filesystems/squashfs.html) to make a read-only compressed copy of the model once trained.  This is much slower but makes the model much more portable.
 
@@ -165,5 +165,12 @@ mount ~/model.sqfs ~/model_smaller -t squashfs -o loop
 echo "foo" | ./from_nextbyte_distribution ~/model_smaller 4 1024
 ```
 
+If you have enough RAM, you can also get a speed boost by using a RAM disk for the model instead of a physical disk.
+
+```
+mount -t tmpfs -o size=16384G tmpfs ~/model/
+```
+
 > [!TIP]
 > The `mount` command may require `sudo` priviledges.
+
