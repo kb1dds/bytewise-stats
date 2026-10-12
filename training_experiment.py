@@ -10,7 +10,7 @@ import time
 #  $ sudo mount -t tmpfs -o size=16384G tmpfs ~/tmp/
 
 corpus = 'corpus_1.txt'
-max_window = 10
+max_window = 12
 model_path = '~/tmp/' # Beware.  This directory is routinely deleted!
 
 with open('results.csv','a') as fp:
